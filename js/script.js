@@ -7,56 +7,56 @@ fetch("https://randomuser.me/api/?results=12&nat=ca")
     .catch(error => console.log(error)) //handling error
 
 
-//Helper function
-const listOfEmployees = [];
-const gallery = document.getElementById("gallery"),
+//Helper function to use to generate results above
+let listOfEmployees = []; //create an empty array to save data in generateResults function
+const gallery = document.getElementById("gallery");
 
-function generateResults (data){
-    listOfEmployees = data
-    //Create employee details needed to be looped
-    data.forEach((e, index) =>{
-        const image = e.image
-        const firstName = e.name.first
-        const lastName = e.name.last
-        const email = e.email
-        const city = e.city
-        const state = e.state
+function generateResults(data){
+    listOfEmployees = data // keep data in array //
+    data.forEach((element, index) =>{ //list of what info each element will have in array//
+        const image = element.picture.large
+        const firstName = element.name.first
+        const lastName = element.name.last
+        const email = element.email
+        const city = element.location.city
+        const state = element.location.state
         //create employee details HTML
-        searchbarHTML = `
-        <div class="card" data-index=${index} >
+        searchbarHTML = 
+        `<div class="card" data-index=${index}>
             <div class="card-img-container">
-                <img class="card-img" src="${picture}" alt="profile picture">
-        </div>
-        <div class="card-info-container">
-            <h3 id="name" class="card-name cap">${firstName} ${lastName}</h3>
+                <img class="card-img" src="${image}" alt="profile picture">
+            </div>
+            <div class="card-info-container">
+                <h3 id="name" class="card-name cap">${firstName} ${lastName}</h3>
                 <p class="card-text">${email}</p>
                 <p class="card-text cap">${city}, ${state}</p>
-        </div>
-    </div>`;
-    gallery.insertAdjacentHTML('beforeend', searchbarHTML)//insert employee HTML created into DOM
+            </div>
+        </div>`; //html to be inserted into DOM in order to display in browser //
+        gallery.insertAdjacentHTML('beforeend', searchbarHTML);
     })
 }
 
 
-//Regex dateOfBirth.
-function formatDateOfBirth(dateOfBirth) {
-    const year = dateOfBirth.date.slice(0,4);
-    const month = dateOfBirth.date.slice(5,7)
-    const day = dateOfBirth.date.slice(8,10);
-    return `${month}/${day}/${year}`;
+//Regex dateOfBirth to rearrange by month/day/year
+function formatDateOfBirth(dob) {
+    const year = dob.date.slice(0,4); //slicing year from original data: year is first four digits
+    const month = dob.date.slice(5,7) //slicing month from original data: month is fifth to seventh digit
+    const day = dob.date.slice(8,10); //slicing day from original data: day is eigth to tenth digit
+    return `${month}/${day}/${year}`; //return in order of month/day/year
 }
 
 
 //Display modal.
-const body = document.querySelector("body");
-let index = 0;
+const body = document.querySelector("body"); // grabbing body element in order to allow a new "dev" to be created below
+let Index = 0;
 
-function showmodal(index){
-    const {name, email, location, cell, dateOfBirth, picture} = employeelist[index];
-    let DOB = formatdob(dateOfBirth);
-    const regexCell = /^\D(\d{3})\D(\d{3})\D(\d{4})\D$/
-    const cellFormat = cell.replace(regexCell, '($1) $2-$3')
+function showModal(index){
+    const {name, email, location, cell, dob, picture} = listOfEmployees[index]; //use index to loop through data from fetch
+    let DOB = formatDateOfBirth(dob); //format date of birth to month/day/year//
+    const regexCell = /^\D(\d{3})\D(\d{3})\D(\d{4})\D$/; //validate cell number to xxx xxx xxxx//
+    const cellFormat = cell.replace(regexCell, '($1) $2-$3'); //order cell number xxx xxx-xxxx//
 
+    //create new "div" HTML holding all the profile info to the DOM//
     addDiv = 
     `<div class="modal-container" data-index="${index}">
         <div class="modal">
@@ -75,31 +75,70 @@ function showmodal(index){
                     <button type="button" id="modal-next" class="modal-next btn">Next</button>
         </div>
     </div>`;
-    //Add the modal HTML inside of body.
+    //Append the newly created modal "div" HTML inside body element.
     body.insertAdjacentHTML('beforeend', addDiv);
   //remove current modal container when clicking the close button.
-  const closebtn = document.getElementById('modal-close-btn');
-  const modalcontainer = document.querySelector('.modal-container');
-      closebtn.addEventListener('click', () => {
-      modalcontainer.remove();
+  const closeButton = document.getElementById('modal-close-btn'); //grab close button element from DOM
+  const modalContainer = document.querySelector('.modal-container'); //grab modal-container element from DOM
+      //click event listner to remove modalContainer element when closed
+      closeButton.addEventListener('click', () => {
+      modalContainer.remove();
       })
     //Set up next, previous and container buttons.("Exceeds #2")
-    const btnPrev = document.getElementById('modal-prev');
-    const btnNext = document.getElementById('modal-next');
+    const previousButton = document.getElementById('modal-prev');
+    const nextButton = document.getElementById('modal-next');
     const btnmodal = document.querySelector('.modal-btn-container');
 
+        //event listner with conditions on how employees can be viewed using next and previous buttons
         btnmodal.addEventListener('click', (e) => {
-            if (e.target == btnNext && Index < employeelist.length - 1) {
+            if (e.target == nextButton && Index < listOfEmployees.length - 1) {
                 Index++
-            } else if (e.target == btnNext && Index == employeelist.length - 1) {
+            } else if (e.target == nextButton && Index == listOfEmployees.length - 1) {
                 Index = 0
-            } else if (e.target == btnPrev && Index > 0) {
+            } else if (e.target == previousButton && index > 0) {
                 Index--
-            }else if (e.target == btnPrev && Index == 0) {
-                Index = employeelist.length -1
+            } else if (e.target == previousButton && Index == 0) {
+                Index = listOfEmployees.length -1
             }
             document.body.removeChild(document.body.lastElementChild);
-            //Another way to remove the last modal 'document.querySelector('.modal-container').remove();'
-            displaymodal(Index);
+            //Alternatively, you can remove the last modal with 'document.querySelector('.modal-container').remove();'
+            showModal(Index);
         })
 }
+
+//Show the profile modal of employee.
+gallery.addEventListener('click', (e) => {
+    const card = e.target.closest('.card');
+    const index = card.getAttribute('data-index');
+    Index = index
+    showModal(Index);
+})
+
+//Create function to add searchbar to the DOM
+const searchContainer = document.querySelector(".search-container"); //grab search bar element
+function createsearchbar(){
+    const newSearchBarElement = 
+    `<form action="#" method="get">
+        <input type="search" id="search-input" class="search-input" placeholder="Search...">
+        <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
+    </form>`;
+    searchContainer.insertAdjacentHTML('beforeend',newSearchBarElement);
+}
+createsearchbar(); //show searchbar by default on page
+
+//use a partial search to filter out results
+
+
+searchContainer.addEventListener('keyup', e => {
+    e.preventDefault();
+    searchInput = document.getElementById('search-input').value.toLowerCase();
+  
+    for(let i = 0; i < gallery.children.length; i++) {
+        let showpage = gallery.children[i].children[1].children[0].textContent.toLowerCase();
+        if(showpage.includes(searchInput)) {
+          gallery.children[i].setAttribute('style', 'display: flex')
+        } else if(!(showpage.includes(searchInput))) {
+          gallery.children[i].setAttribute('style', 'display: none')
+        }     
+    }
+});
